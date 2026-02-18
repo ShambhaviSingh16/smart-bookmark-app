@@ -1,65 +1,335 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+type Bookmark = {
+  id: string;
+  title: string;
+  url: string;
+};
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [loadingBookmarks, setLoadingBookmarks] = useState(false);
+
+  const [adding, setAdding] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const [search, setSearch] = useState("");
+
+  // ================= AUTH =================
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setAuthLoading(false);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // ================= FETCH BOOKMARKS =================
+  const fetchBookmarks = async () => {
+    if (!user) return;
+
+    setLoadingBookmarks(true);
+
+    const { data } = await supabase
+      .from("bookmarks")
+      .select("*")
+      .eq("user_id", user.id) // ✅ CRITICAL
+      .order("created_at", { ascending: false });
+
+    setBookmarks(data || []);
+    setLoadingBookmarks(false);
+  };
+
+useEffect(() => {
+  if (!user) return;
+
+  // initial fetch
+  fetchBookmarks();
+
+  // 🔥 realtime subscription
+  const channel = supabase
+    .channel("bookmarks-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "bookmarks",
+        filter: `user_id=eq.${user.id}`,
+      },
+      () => {
+        fetchBookmarks();
+      }
+    )
+    .subscribe();
+
+  // cleanup
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [user]);
+
+
+  // ================= URL HELPERS =================
+  const normalizeUrl = (value: string) => {
+    let clean = value.trim();
+    if (!clean) return "";
+
+    if (!/^https?:\/\//i.test(clean)) {
+      clean = "https://" + clean;
+    }
+
+    try {
+      const urlObj = new URL(clean);
+      return urlObj.toString();
+    } catch {
+      return clean;
+    }
+  };
+
+  const isValidUrl = (value: string) => {
+    try {
+      const u = new URL(value);
+      return !!u.hostname && u.hostname.includes(".");
+    } catch {
+      return false;
+    }
+  };
+
+  // ================= SIGN IN =================
+  const signInWithGoogle = async () => {
+    setAuthLoading(true);
+
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "http://localhost:3000",
+      },
+    });
+  };
+
+  // ================= SIGN OUT =================
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  // ================= ADD BOOKMARK =================
+  const addBookmark = async () => {
+    setMessage("");
+
+    const trimmedTitle = title.trim();
+    const trimmedUrl = url.trim();
+
+    if (!trimmedTitle || !trimmedUrl) {
+      setMessage("❌ Please fill all fields");
+      return;
+    }
+
+    const normalizedUrl = normalizeUrl(trimmedUrl);
+
+    if (!isValidUrl(normalizedUrl)) {
+      setMessage("❌ Please enter a valid URL (example: google.com)");
+      return;
+    }
+
+    // prevent duplicate URLs
+    const exists = bookmarks.some(
+      (b) =>
+        normalizeUrl(b.url).toLowerCase() ===
+        normalizedUrl.toLowerCase()
+    );
+
+    if (exists) {
+      setMessage("⚠️ This bookmark already exists");
+      return;
+    }
+
+    setAdding(true);
+
+    const { error } = await supabase.from("bookmarks").insert([
+      {
+        title: trimmedTitle,
+        url: normalizedUrl,
+        user_id: user.id,
+      },
+    ]);
+
+    setAdding(false);
+
+    if (error) {
+      setMessage("❌ Failed to add bookmark. Please try again.");
+      return;
+    }
+
+    setTitle("");
+    setUrl("");
+    setMessage("✅ Bookmark added!");
+
+    fetchBookmarks();
+  };
+
+  // ================= DELETE =================
+  const deleteBookmark = async (id: string) => {
+    await supabase.from("bookmarks").delete().eq("id", id).eq("user_id", user.id);
+    fetchBookmarks();
+  };
+
+  // ================= FILTER =================
+  const filteredBookmarks = useMemo(() => {
+    return bookmarks.filter((b) =>
+      b.title.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [bookmarks, search]);
+
+  // ================= AUTH UI =================
+  if (!user) {
+    return (
+      <div className="center">
+        {/* <div className="authBox"> */}
+        <div className="authBox glass">
+          <h1 className="title">🔖 Smart Bookmark Manager</h1>
+
+          <button
+            className="googleBtn"
+            onClick={signInWithGoogle}
+            disabled={authLoading}
+          >
+            {authLoading ? "Signing in..." : "🔐 Continue with Google"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= MAIN UI =================
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="container">
+      {/* HEADER */}
+      {/* <div style={{ textAlign: "center" }}>
+        <h2>Welcome, {user.email}</h2>
+        <button className="logoutBtn" onClick={signOut}>
+          Logout
+        </button>
+      </div> */}
+
+      <div className="glass header">
+        <div className="userEmail">
+          👋 Welcome, <strong>{user.email}</strong>
+        </div>
+
+        <button className="logoutBtn" onClick={signOut}>
+          Logout
+        </button>
+      </div>
+
+
+      {/* ADD FORM */}
+      {/* <div className="card"> */}
+      <div className="card glass">
+        <h3 className="formTitle">Add Bookmark</h3>
+
+        <input
+          className="input"
+          placeholder="Enter title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+        <input
+          className="input"
+          placeholder="Enter URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+
+        <button
+          className="addBtn"
+          onClick={addBookmark}
+          disabled={adding}
+        >
+          {adding ? "Adding..." : "Add Bookmark"}
+        </button>
+
+        {message && (
+          <p className={message.startsWith("✅") ? "success" : "error"}>
+            {message}
           </p>
+        )}
+      </div>
+
+      {/* SEARCH */}
+      <input
+        className="search"
+        placeholder="🔍 Search bookmarks..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {/* LIST */}
+      {loadingBookmarks ? (
+        <div className="grid">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="skeleton" />
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      ) : filteredBookmarks.length === 0 ? (
+        <div className="empty">
+          <h3>📭 No bookmarks yet</h3>
+          <p>Add your first bookmark above</p>
         </div>
-      </main>
+      ) : (
+        <div className="grid">
+          {filteredBookmarks.map((b) => (
+            // <div key={b.id} className="bookmarkCard">
+            <div key={b.id} className="bookmarkCard glass">
+              <div className="cardTop">
+                <h4 className="cardTitle">{b.title}</h4>
+
+                <span className="urlText" title={b.url}>
+                  {b.url.replace(/^https?:\/\//, "")}
+                </span>
+              </div>
+
+              <div className="cardActions">
+                <a
+                  className="visitBtnPrimary"
+                  href={b.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  🚀 Open Site
+                </a>
+
+                <button
+                  className="deleteBtn"
+                  onClick={() => deleteBookmark(b.id)}
+                >
+                  🗑 Delete
+                </button>
+              </div>
+
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

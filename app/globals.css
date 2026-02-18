@@ -1,15 +1,26 @@
 @import "tailwindcss";
 
+/* ===== RESET TO FIX RIGHT GAP ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== THEME ===== */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,7 +31,479 @@
 }
 
 body {
-  background: var(--background);
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(56, 189, 248, 0.15),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 80% 0%,
+      rgba(168, 85, 247, 0.18),
+      transparent 40%
+    ),
+    linear-gradient(135deg, #0b1220, #111827 60%, #020617);
+
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+/* ===== APP LAYOUT ===== */
+/* ================= CONTAINERS ================= */
+
+.container {
+  min-height: 100vh;
+  padding: 40px 20px;
+  /* background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white; */
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.center {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white; */
+}
+
+/* ================= GLASS CARD ================= */
+
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35),
+    inset 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* ================= HEADER ================= */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding: 16px 20px;
+}
+
+.userEmail {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.logoutBtn {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+
+.logoutBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+}
+
+/* ================= AUTH ================= */
+
+.authBox {
+  padding: 40px;
+  text-align: center;
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+/* ===== BUTTONS ===== */
+
+.googleBtn {
+  background: white;
+  color: black;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+
+.googleBtn:hover {
+  transform: translateY(-1px);
+}
+
+.googleBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/* 
+.logoutBtn {
+  background: #ef4444;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+} */
+
+/* ===== FORM CARD ===== */
+
+.card {
+  /* background: rgba(255, 255, 255, 0.06); */
+  padding: 24px;
+  /* border-radius: 16px; */
+  margin: 30px auto;
+  max-width: 700px;
+  /* backdrop-filter: blur(10px); */
+}
+
+.formTitle {
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  /* border: none; */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  color: white;
+  outline: none;
+}
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+.addBtn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+
+.addBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(34, 197, 94, 0.35);
+}
+
+.addBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success {
+  color: #4ade80;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.error {
+  color: #f87171;
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* ===== SEARCH ===== */
+
+.search {
+  width: 100%;
+  max-width: 520px;
+  margin: 26px auto;
+  display: block;
+  padding: 12px;
+  /* border: none; */
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.25);
+  color: white;
+  outline: none;
+}
+
+/* ===== GRID ===== */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 260px));
+  gap: 22px;
+  margin-top: 26px;
+  justify-content: center;
+}
+
+/* ===== BOOKMARK CARD ===== */
+
+.bookmarkCard {
+  /* background: rgba(255, 255, 255, 0.06); */
+  padding: 18px;
+  /* border-radius: 16px; */
+  transition: all 0.25s ease;
+  /* backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px; */
+  position: relative;
+}
+
+.bookmarkCard:hover {
+  transform: translateY(-6px) scale(1.02);
+  /* background: rgba(255, 255, 255, 0.1); */
+}
+
+.cardTop {
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.urlText {
+  font-size: 12px;
+  color: #94a3b8;
+  word-break: break-all;
+  opacity: 0.85;
+}
+
+/* 
+.cardTop {
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #ffffff;
+  word-break: break-word;
+}
+
+.urlText {
+  font-size: 12px;
+  color: #94a3b8;
+  word-break: break-all;
+  display: block;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.visitBtn {
+  text-decoration: none;
+  color: #38bdf8;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.visitBtn:hover {
+  color: #0ea5e9;
+}
+
+.deleteBtn {
+  background: #ef4444;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.deleteBtn:hover {
+  background: #dc2626;
+} */
+
+.bookmarkTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.bookmarkUrl {
+  font-size: 12px;
+  opacity: 0.65;
+  word-break: break-all;
+  margin-bottom: 14px;
+}
+
+.cardActions {
+  display: flex;
+  /* justify-content: space-between; */
+  gap: 12px;
+  margin-top: 16px;
+  align-items: center;
+}
+
+/* .visit {
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 500;
+} */
+
+/* ===== ULTRA POLISHED VISIT BUTTON ===== */
+
+.visitBtnPrimary {
+  display: inline-flex;          /* 🔥 prevents stretching */
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  padding: 7px 12px;             /* 🔥 slimmer height */
+  min-height: 32px;              /* 🔥 consistent size */
+  border-radius: 8px;            /* 🔥 less pill, more premium */
+
+  font-size: 12.5px;             /* 🔥 slightly smaller */
+  font-weight: 500;              /* 🔥 lighter than before */
+  letter-spacing: 0.2px;
+
+  color: white;
+  text-decoration: none;
+  white-space: nowrap;
+
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+
+  box-shadow:
+    0 4px 14px rgba(56, 189, 248, 0.25);  /* 🔥 much softer */
+
+  transition: all 0.18s ease;
+}
+
+/* ✨ subtle hover (NOT jumpy) */
+.visitBtnPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 20px rgba(99, 102, 241, 0.32);
+}
+
+/* ✨ click feel */
+.visitBtnPrimary:active {
+  transform: scale(0.96);
+}
+
+/* ✨ soft shine */
+.visitBtnPrimary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.18),
+    transparent
+  );
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.visitBtnPrimary:hover::after {
+  opacity: 1;
+}
+
+
+/* .deleteBtn {
+  background: #ef4444;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+} */
+
+.deleteBtn {
+  background: #ef4444;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: 0.25s ease;
+}
+
+.deleteBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+}
+
+
+/* ===== EMPTY ===== */
+
+.empty {
+  text-align: center;
+  opacity: 0.7;
+  margin-top: 60px;
+}
+
+/* ===== SKELETON ===== */
+
+.skeleton {
+  height: 110px;
+  border-radius: 16px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.05) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0 }
+  100% { background-position: -100% 0 }
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 640px) {
+  .container {
+    padding: 20px 14px;
+  }
+
+  /* .card {
+    padding: 18px;
+  }
+
+  .title {
+    font-size: 22px;
+  } */
+   .header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
 }
