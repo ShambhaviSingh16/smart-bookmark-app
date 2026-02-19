@@ -9,6 +9,7 @@ Built as part of a Fullstack/GenAI screening task.
 ## 🚀 Live Demo
 
 👉 **Live URL:** *[https://smart-bookmark-applicationn.vercel.app/]*
+
 👉 **GitHub Repo:** [https://github.com/ShambhaviSingh16/smart-bookmark-app](https://github.com/ShambhaviSingh16/smart-bookmark-app/)
 
 ---
