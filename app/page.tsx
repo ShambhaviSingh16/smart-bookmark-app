@@ -58,34 +58,34 @@ export default function Home() {
     setLoadingBookmarks(false);
   };
 
-useEffect(() => {
-  if (!user) return;
+  useEffect(() => {
+    if (!user) return;
 
-  // initial fetch
-  fetchBookmarks();
+    // initial fetch
+    fetchBookmarks();
 
-  // 🔥 realtime subscription
-  const channel = supabase
-    .channel("bookmarks-realtime")
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "bookmarks",
-        filter: `user_id=eq.${user.id}`,
-      },
-      () => {
-        fetchBookmarks();
-      }
-    )
-    .subscribe();
+    // 🔥 realtime subscription
+    const channel = supabase
+      .channel("bookmarks-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bookmarks",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchBookmarks();
+        }
+      )
+      .subscribe();
 
-  // cleanup
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [user]);
+    // cleanup
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
 
   // ================= URL HELPERS =================
@@ -121,10 +121,11 @@ useEffect(() => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:3000",
+        redirectTo: window.location.origin,
       },
     });
   };
+
 
   // ================= SIGN OUT =================
   const signOut = async () => {
